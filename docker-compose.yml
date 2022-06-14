@@ -1,0 +1,53 @@
+version: '3.7'
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .env.docker:/app/.env
+    ports:
+      - '3000:3000'
+    links:
+      - mongo
+  front:
+    container_name: front
+    build: ./front
+    ports:
+      - "3001:80"
+    links:
+      - app
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: developer
+      MONGO_INITDB_ROOT_PASSWORD: P@ssw0rdForDeveloper
+      MONGO_INITDB_DATABASE: tests
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./mongo/data:/data/db
+  mongo-express:
+    container_name: mongo-express
+    restart: always
+    image: mongo-express:0.54.0
+    ports:
+      - '1234:8081'
+    depends_on:
+      - mongo
+    links:
+      - mongo
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=tests
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=developer
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=P@ssw0rdForDeveloper
+      - ME_CONFIG_BASICAUTH_USERNAME=developer
+      - ME_CONFIG_BASICAUTH_PASSWORD=P@ssw0rdForDeveloper
+    volumes:
+      - ./mongo/data:/data/db
